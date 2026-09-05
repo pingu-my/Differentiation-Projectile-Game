@@ -468,6 +468,209 @@ apply_background()
 
 
 # =========================================================
+# GAMEPLAY-ONLY READABILITY
+# =========================================================
+
+def apply_gameplay_readability():
+    """
+    Make gameplay much easier to read while leaving the
+    scenic CALSHOT start screen unchanged.
+    """
+
+    if not os.path.exists(BACKGROUND_FILE):
+        return
+
+    encoded_background = image_to_base64(
+        BACKGROUND_FILE
+    )
+
+    st.markdown(
+        f"""
+        <style>
+
+        /* =============================================
+           MUCH SOFTER GAMEPLAY BACKGROUND
+        ============================================= */
+
+        .stApp {{
+            background-image:
+                linear-gradient(
+                    rgba(255, 255, 255, 0.94),
+                    rgba(255, 255, 255, 0.97)
+                ),
+                url("data:image/png;base64,{encoded_background}") !important;
+
+            background-size: 100vw 100vh !important;
+            background-position: center top !important;
+            background-repeat: no-repeat !important;
+            background-attachment: fixed !important;
+            background-color: #f7fbff !important;
+        }}
+
+        [data-testid="stHeader"] {{
+            background: rgba(255, 255, 255, 0.86) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }}
+
+        /* =============================================
+           LARGE WHITE / GLASS GAME SURFACE
+        ============================================= */
+
+        .block-container {{
+            max-width: 1380px !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(210, 224, 240, 0.95) !important;
+            border-radius: 24px !important;
+            box-shadow: 0 14px 42px rgba(23, 52, 95, 0.12) !important;
+            padding: 2rem 2.4rem 3rem 2.4rem !important;
+            margin-top: 1rem !important;
+            margin-bottom: 2rem !important;
+        }}
+
+        /* =============================================
+           STRONGER TEXT CONTRAST
+        ============================================= */
+
+        .block-container h1,
+        .block-container h2,
+        .block-container h3 {{
+            color: #102a4c !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.01em;
+        }}
+
+        .block-container h2 {{
+            font-size: 2rem !important;
+        }}
+
+        .block-container h3 {{
+            font-size: 1.65rem !important;
+            margin-top: 1.1rem !important;
+        }}
+
+        .block-container [data-testid="stMarkdownContainer"] p,
+        .block-container [data-testid="stMarkdownContainer"] li {{
+            color: #17233b !important;
+            font-size: 1.18rem !important;
+            line-height: 1.7 !important;
+            font-weight: 500 !important;
+        }}
+
+        /* Question / instruction captions */
+        .block-container [data-testid="stCaptionContainer"] {{
+            color: #334866 !important;
+            font-size: 1.04rem !important;
+            line-height: 1.55 !important;
+            font-weight: 550 !important;
+        }}
+
+        /* Answer label */
+        .block-container [data-testid="stTextInput"] label p {{
+            color: #102a4c !important;
+            font-size: 1.12rem !important;
+            font-weight: 750 !important;
+        }}
+
+        /* Answer box */
+        .block-container [data-testid="stTextInput"] input {{
+            min-height: 54px !important;
+            background: rgba(255, 255, 255, 1) !important;
+            color: #10213a !important;
+            font-size: 1.16rem !important;
+            border: 2px solid #b7c9df !important;
+            border-radius: 12px !important;
+            padding-left: 16px !important;
+        }}
+
+        .block-container [data-testid="stTextInput"] input:focus {{
+            border-color: #547aa5 !important;
+            box-shadow: 0 0 0 2px rgba(84, 122, 165, 0.12) !important;
+        }}
+
+        /* =============================================
+           LARGER MATHEMATICS
+        ============================================= */
+
+        .block-container .katex-display {{
+            font-size: 1.35em !important;
+            color: #0f2745 !important;
+            margin-top: 0.8rem !important;
+            margin-bottom: 1rem !important;
+        }}
+
+        .block-container .katex {{
+            color: #0f2745 !important;
+        }}
+
+        /* =============================================
+           INFO / HINT / FEEDBACK CARDS
+        ============================================= */
+
+        .block-container [data-testid="stAlert"] {{
+            background: rgba(255, 255, 255, 0.98) !important;
+            border: 1px solid rgba(190, 208, 228, 0.95) !important;
+            border-radius: 14px !important;
+            box-shadow: 0 4px 14px rgba(23, 52, 95, 0.06) !important;
+        }}
+
+        .block-container [data-testid="stAlert"] p {{
+            color: #17233b !important;
+            font-size: 1.08rem !important;
+            line-height: 1.55 !important;
+            font-weight: 600 !important;
+        }}
+
+        /* Dashboard cards */
+        .block-container [data-testid="stMetric"] {{
+            background: rgba(255, 255, 255, 0.99) !important;
+            border: 1px solid #d6e2ef !important;
+            box-shadow: 0 4px 14px rgba(23, 52, 95, 0.05) !important;
+        }}
+
+        /* Buttons */
+        .block-container .stButton > button {{
+            min-height: 48px !important;
+            font-size: 1.05rem !important;
+            font-weight: 750 !important;
+        }}
+
+        /* Keep dividers visible */
+        .block-container hr {{
+            border-color: rgba(92, 118, 148, 0.22) !important;
+        }}
+
+        @media (max-width: 900px) {{
+
+            .stApp {{
+                background-size: cover !important;
+            }}
+
+            .block-container {{
+                padding: 1.25rem 1rem 2rem 1rem !important;
+                border-radius: 16px !important;
+                margin-top: 0.4rem !important;
+            }}
+
+            .block-container [data-testid="stMarkdownContainer"] p,
+            .block-container [data-testid="stMarkdownContainer"] li {{
+                font-size: 1.08rem !important;
+            }}
+
+            .block-container .katex-display {{
+                font-size: 1.18em !important;
+            }}
+        }}
+
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# =========================================================
 # COMPACT MUSIC PLAYER
 # =========================================================
 
@@ -762,17 +965,10 @@ if not st.session_state.started:
 
 else:
 
-    # Mark the page as active gameplay so the CSS can improve
-    # question readability without changing the scenic login screen.
-    st.markdown(
-        """
-        <script>
-        const body = window.parent.document.body;
-        body.classList.add("calshot-game-active");
-        </script>
-        """,
-        unsafe_allow_html=True,
-    )
+    # Apply much stronger gameplay readability styling.
+    # This runs only after the student has entered the game,
+    # so the scenic login screen stays unchanged.
+    apply_gameplay_readability()
 
     # Start the looping background music after the student
     # has clicked Start Game.
