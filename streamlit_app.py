@@ -411,6 +411,53 @@ def apply_background():
             }}
         }}
 
+        /* =============================================
+           GAMEPLAY READABILITY
+           Keep the start screen scenic, but calm the
+           background once a student enters the game.
+        ============================================= */
+
+        body.calshot-game-active .stApp {{
+            background-image:
+                linear-gradient(
+                    rgba(255, 255, 255, 0.80),
+                    rgba(255, 255, 255, 0.88)
+                ),
+                url("data:image/png;base64,{encoded_background}");
+        }}
+
+        body.calshot-game-active .block-container {{
+            background: rgba(255, 255, 255, 0.76);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.78);
+            border-radius: 22px;
+            box-shadow: 0 10px 34px rgba(23, 52, 95, 0.10);
+            padding-left: 2rem;
+            padding-right: 2rem;
+            margin-top: 0.8rem;
+            margin-bottom: 2rem;
+        }}
+
+        body.calshot-game-active p,
+        body.calshot-game-active label,
+        body.calshot-game-active .stMarkdown,
+        body.calshot-game-active [data-testid="stCaptionContainer"] {{
+            color: #17233b;
+        }}
+
+        body.calshot-game-active [data-testid="stAlert"] {{
+            background: rgba(255, 255, 255, 0.92);
+        }}
+
+        @media (max-width: 900px) {{
+            body.calshot-game-active .block-container {{
+                padding-left: 1rem;
+                padding-right: 1rem;
+                border-radius: 14px;
+            }}
+        }}
+
         </style>
         """,
         unsafe_allow_html=True,
@@ -714,6 +761,18 @@ if not st.session_state.started:
 # =========================================================
 
 else:
+
+    # Mark the page as active gameplay so the CSS can improve
+    # question readability without changing the scenic login screen.
+    st.markdown(
+        """
+        <script>
+        const body = window.parent.document.body;
+        body.classList.add("calshot-game-active");
+        </script>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # Start the looping background music after the student
     # has clicked Start Game.
