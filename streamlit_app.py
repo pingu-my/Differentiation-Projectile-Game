@@ -270,11 +270,10 @@ def image_to_base64(file_path):
 
 def apply_background():
     """
-    Adds the Sarawak CALSHOT image safely as the
-    page background.
+    Adds the CALSHOT background as a full-screen fixed backdrop.
 
-    Important:
-    We do NOT place a giant white container over the app.
+    The image is stretched to the browser viewport so the top CALSHOT /
+    Swinburne area and the bottom-right design credit remain visible.
     """
 
     if not os.path.exists(BACKGROUND_FILE):
@@ -289,42 +288,75 @@ def apply_background():
         <style>
 
         /* =============================================
-           CALSHOT PAGE BACKGROUND
+           CALSHOT FULL-SCREEN BACKGROUND
         ============================================= */
 
         .stApp {{
             background-image:
                 linear-gradient(
-                    rgba(255, 255, 255, 0.76),
-                    rgba(255, 255, 255, 0.82)
+                    rgba(255, 255, 255, 0.58),
+                    rgba(255, 255, 255, 0.68)
                 ),
                 url("data:image/png;base64,{encoded_background}");
 
-            background-size: cover;
-            background-position: center 85%;
+            background-size: 100vw 100vh;
+            background-position: center top;
             background-repeat: no-repeat;
             background-attachment: fixed;
+            background-color: #eef6ff;
         }}
-
-
-        /* Keep Streamlit header subtle */
 
         [data-testid="stHeader"] {{
-            background: rgba(255, 255, 255, 0.55);
-            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.22);
+            backdrop-filter: blur(5px);
         }}
 
-
-        /* Main content remains visible */
-
         .block-container {{
-            max-width: 1200px;
-            padding-top: 2rem;
+            max-width: 1500px;
+            padding-top: 1.25rem;
             padding-bottom: 3rem;
         }}
 
+        .calshot-login-spacer {{
+            height: 14.5rem;
+        }}
 
-        /* Make headings easier to read */
+        /* Start-screen form styling:
+           narrower controls, larger text, and shifted away from the hornbill. */
+        .calshot-login-wrap {{
+            max-width: 760px;
+            margin-left: 16%;
+        }}
+
+        .calshot-login-wrap h2 {{
+            font-size: 2.5rem !important;
+            margin-bottom: 1rem !important;
+        }}
+
+        .calshot-login-wrap label {{
+            font-size: 1.15rem !important;
+            font-weight: 600 !important;
+        }}
+
+        .calshot-login-wrap [data-testid="stTextInput"] {{
+            max-width: 620px;
+        }}
+
+        .calshot-login-wrap [data-testid="stTextInput"] input {{
+            min-height: 54px;
+            font-size: 1.2rem !important;
+            padding-left: 18px !important;
+        }}
+
+        .calshot-login-wrap .stButton {{
+            max-width: 620px;
+        }}
+
+        .calshot-login-wrap .stButton > button {{
+            min-height: 54px;
+            font-size: 1.2rem !important;
+            font-weight: 700 !important;
+        }}
 
         h1,
         h2,
@@ -332,35 +364,21 @@ def apply_background():
             color: #17345f;
         }}
 
-
-        /* Metric cards */
-
         [data-testid="stMetric"] {{
-            background: rgba(255, 255, 255, 0.82);
+            background: rgba(255, 255, 255, 0.84);
             padding: 12px 14px;
             border-radius: 14px;
-            border: 1px solid rgba(255,255,255,0.9);
+            border: 1px solid rgba(255, 255, 255, 0.92);
         }}
-
-
-        /* Input field readability */
 
         [data-testid="stTextInput"] input {{
-            background: rgba(255, 255, 255, 0.94);
+            background: rgba(255, 255, 255, 0.96);
             border-radius: 10px;
         }}
-
-
-        /* Buttons */
 
         .stButton > button {{
             border-radius: 10px;
         }}
-
-
-        /* =============================================
-           COMPACT AUDIO PLAYER
-        ============================================= */
 
         audio {{
             width: 190px !important;
@@ -371,30 +389,32 @@ def apply_background():
             margin-top: -8px;
         }}
 
+        @media (max-width: 900px) {{
 
-        /* =============================================
-           MOBILE
-        ============================================= */
-
-        @media (max-width: 700px) {{
+            .stApp {{
+                background-size: cover;
+                background-position: center top;
+            }}
 
             .block-container {{
                 padding-left: 1rem;
                 padding-right: 1rem;
             }}
 
+            .calshot-login-spacer {{
+                height: 12.5rem;
+            }}
+
             audio {{
                 width: 150px !important;
                 height: 30px !important;
             }}
-
         }}
 
         </style>
         """,
         unsafe_allow_html=True,
     )
-
 
 # Apply the background immediately
 apply_background()
@@ -596,92 +616,97 @@ if "game_over" not in st.session_state:
 
 if not st.session_state.started:
 
-    st.divider()
-
+    # Leave the CALSHOT logo and tagline completely unobstructed.
     st.markdown(
-        "## 🎮 Enter the Mission"
+        '<div class="calshot-login-spacer"></div>',
+        unsafe_allow_html=True,
     )
 
-    # Students only need to enter their name.
-    name = st.text_input(
-        "Student name",
-        value=st.session_state.student_name,
-        placeholder="Enter your name",
+    # Three-column layout:
+    # - left spacer keeps the form away from the hornbill
+    # - middle column keeps the form compact
+    # - right spacer preserves the bridge, DUN building and feature cards
+    left_space, login_area, right_space = st.columns(
+        [0.20, 0.32, 0.48],
+        gap="small",
     )
 
-    if st.button(
-        "🚀 Start Game",
-        type="primary",
-        use_container_width=True,
-    ):
+    with login_area:
 
-        player_name = name.strip()
+        name = st.text_input(
+            "Student name",
+            value=st.session_state.student_name,
+            placeholder="Enter your name",
+        )
 
-        if not player_name:
+        if st.button(
+            "🚀 Start Game",
+            type="primary",
+            use_container_width=True,
+        ):
 
-            st.warning(
-                "Please enter your name."
-            )
+            player_name = name.strip()
 
-        elif not SUPABASE_CONNECTED:
+            if not player_name:
 
-            st.error(
-                "The CALSHOT database is temporarily unavailable. "
-                "Please try again."
-            )
-
-        else:
-
-            try:
-
-                # Supabase automatically assigns the student id.
-                student_id = create_student(
-                    player_name
+                st.warning(
+                    "Please enter your name."
                 )
 
-                # Supabase creates the game-session row.
-                # CALSHOT keeps a hidden date/time session label too.
-                db_session_id, session_label = (
-                    create_game_session(
-                        student_id
-                    )
-                )
-
-                reset_game()
-
-                st.session_state.student_name = (
-                    player_name
-                )
-
-                st.session_state.student_id = (
-                    student_id
-                )
-
-                st.session_state.session_id = (
-                    session_label
-                )
-
-                st.session_state.db_session_id = (
-                    db_session_id
-                )
-
-                st.session_state.started = True
-
-                st.session_state.start_time = (
-                    time.time()
-                )
-
-                st.rerun()
-
-            except Exception as e:
+            elif not SUPABASE_CONNECTED:
 
                 st.error(
-                    "CALSHOT could not start the database session."
+                    "The CALSHOT database is temporarily unavailable. "
+                    "Please try again."
                 )
 
-                # Temporary diagnostic message.
-                # Remove this after the Supabase schema is confirmed.
-                st.code(str(e))
+            else:
+
+                try:
+
+                    student_id = create_student(
+                        player_name
+                    )
+
+                    db_session_id, session_label = (
+                        create_game_session(
+                            student_id
+                        )
+                    )
+
+                    reset_game()
+
+                    st.session_state.student_name = (
+                        player_name
+                    )
+
+                    st.session_state.student_id = (
+                        student_id
+                    )
+
+                    st.session_state.session_id = (
+                        session_label
+                    )
+
+                    st.session_state.db_session_id = (
+                        db_session_id
+                    )
+
+                    st.session_state.started = True
+
+                    st.session_state.start_time = (
+                        time.time()
+                    )
+
+                    st.rerun()
+
+                except Exception as e:
+
+                    st.error(
+                        "CALSHOT could not start the database session."
+                    )
+
+                    st.code(str(e))
 
 
 # =========================================================
