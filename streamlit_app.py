@@ -38,16 +38,6 @@ def get_supabase_client():
 try:
     supabase = get_supabase_client()
 
-    # TEMPORARY CHECK:
-    # Confirms whether Streamlit is actually using
-    # the new Supabase secret key.
-    key_value = st.secrets["SUPABASE_KEY"]
-
-    if str(key_value).startswith("sb_secret_"):
-        st.success("✅ CALSHOT is using a Supabase secret key.")
-    else:
-        st.error("❌ CALSHOT is NOT using a Supabase secret key.")
-
     supabase.table("students").select("id").limit(1).execute()
 
     SUPABASE_CONNECTED = True
@@ -202,6 +192,44 @@ def save_mastery_record():
         raise RuntimeError("Mastery record was not created.")
 
 
+def complete_game_session():
+    """
+    Update the existing Supabase game_sessions row with
+    the student's final CALSHOT results.
+    """
+
+    completion_time_seconds = int(
+        time.time() - st.session_state.start_time
+    )
+
+    accuracy = (
+        st.session_state.correct_answers
+        / TOTAL_QUESTIONS
+    ) * 100
+
+    session_data = {
+        "completed_at": datetime.now(timezone.utc).isoformat(),
+        "total_score": st.session_state.score,
+        "questions_attempted": TOTAL_QUESTIONS,
+        "questions_correct": st.session_state.correct_answers,
+        "accuracy": round(accuracy, 2),
+        "completion_time_seconds": completion_time_seconds,
+        "final_streak": st.session_state.streak,
+        "completed": True,
+    }
+
+    response = (
+        supabase
+        .table("game_sessions")
+        .update(session_data)
+        .eq("id", st.session_state.db_session_id)
+        .execute()
+    )
+
+    if not response.data:
+        raise RuntimeError("Game session was not updated.")
+
+
 # =========================================================
 # CONSTANTS
 # =========================================================
@@ -273,7 +301,7 @@ def apply_background():
                 url("data:image/png;base64,{encoded_background}");
 
             background-size: cover;
-            background-position: center;
+            background-position: center 60%;
             background-repeat: no-repeat;
             background-attachment: fixed;
         }}
@@ -1467,6 +1495,19 @@ else:
                 st.warning(
                     "CALSHOT completed the mission, "
                     "but could not save the final mastery record."
+                )
+
+                st.code(str(e))
+
+            try:
+
+                complete_game_session()
+
+            except Exception as e:
+
+                st.warning(
+                    "CALSHOT completed the mission, "
+                    "but could not update the final game session."
                 )
 
                 st.code(str(e))
