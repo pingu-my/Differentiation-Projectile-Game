@@ -299,10 +299,7 @@ def apply_background():
                 ),
                 url("data:image/png;base64,{encoded_background}");
 
-            /* Reserve a safe strip at the bottom so Streamlit's
-               fixed "Manage app" control does not cover the
-               "Designed by Amy Nyau" credit baked into the image. */
-            background-size: 100vw calc(100vh - 92px);
+            background-size: 100vw 100vh;
             background-position: center top;
             background-repeat: no-repeat;
             background-attachment: fixed;
