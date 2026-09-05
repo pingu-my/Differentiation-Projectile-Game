@@ -4,7 +4,7 @@ import re
 import base64
 
 import streamlit as st
-
+from supabase import create_client
 from question_bank import (
     choose_question,
     check_answer,
@@ -23,7 +23,26 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+# =========================================================
+# SUPABASE CONNECTION
+# =========================================================
 
+@st.cache_resource
+def get_supabase_client():
+    return create_client(
+        st.secrets["SUPABASE_URL"],
+        st.secrets["SUPABASE_KEY"],
+    )
+
+
+try:
+    supabase = get_supabase_client()
+    supabase.table("students").select("id").limit(1).execute()
+    SUPABASE_CONNECTED = True
+except Exception as e:
+    supabase = None
+    SUPABASE_CONNECTED = False
+    SUPABASE_ERROR = str(e)
 
 # =========================================================
 # CONSTANTS
