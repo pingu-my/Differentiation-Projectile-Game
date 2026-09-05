@@ -2,6 +2,7 @@ import os
 import time
 import re
 import base64
+from datetime import datetime, timezone
 
 import streamlit as st
 from supabase import create_client
@@ -43,6 +44,68 @@ except Exception as e:
     supabase = None
     SUPABASE_CONNECTED = False
     SUPABASE_ERROR = str(e)
+
+
+# =========================================================
+# SUPABASE DATA HELPERS
+# =========================================================
+
+def create_student(player_name):
+    """
+    Create one participant record.
+
+    Supabase/PostgreSQL generates students.id automatically.
+    If the id column is an identity/bigserial primary key, the
+    first participant is 1, then 2, 3, and so on.
+    """
+    response = (
+        supabase
+        .table("students")
+        .insert(
+            {
+                "display_name": player_name,
+            }
+        )
+        .execute()
+    )
+
+    if not response.data:
+        raise RuntimeError("Student record was not created.")
+
+    return response.data[0]["id"]
+
+
+def create_game_session(student_id):
+    """
+    Create a fresh game session for one student.
+
+    The database generates its own row id. CALSHOT also keeps a
+    date-time session label in session_state so each play session
+    can be identified by when it started.
+    """
+    session_label = datetime.now(timezone.utc).strftime(
+        "%Y%m%dT%H%M%SZ"
+    )
+
+    response = (
+        supabase
+        .table("game_sessions")
+        .insert(
+            {
+                "student_id": student_id,
+                "total_score": 0,
+                "questions_attempted": 0,
+                "questions_correct": 0,
+                "completed": False,
+            }
+        )
+        .execute()
+    )
+
+    if not response.data:
+        raise RuntimeError("Game session record was not created.")
+
+    return response.data[0]["id"], session_label
 
 # =========================================================
 # CONSTANTS
@@ -349,14 +412,17 @@ if "started" not in st.session_state:
 
 if "student_name" not in st.session_state:
     st.session_state.student_name = ""
-if "participant_code" not in st.session_state:
-    st.session_state.participant_code = ""
 
 if "student_id" not in st.session_state:
     st.session_state.student_id = None
 
+# Human-readable date/time label for this play session.
 if "session_id" not in st.session_state:
     st.session_state.session_id = None
+
+# Internal Supabase game_sessions primary-key id.
+if "db_session_id" not in st.session_state:
+    st.session_state.db_session_id = None
 
 if "score" not in st.session_state:
     st.session_state.score = 0
@@ -443,22 +509,11 @@ if not st.session_state.started:
         "Launch your way through CALSHOT."
     )
 
-    participant_code = st.text_input(
-        "Participant code",
-        value=st.session_state.participant_code,
-        placeholder="Example: S001",
-        help="Use the participant code assigned for the study.",
-    )
-
+    # Students only need to enter their name.
     name = st.text_input(
-        "Display name",
+        "Student name",
         value=st.session_state.student_name,
-        placeholder="Enter your name or nickname",
-    )
-
-    class_group = st.text_input(
-        "Class / group (optional)",
-        placeholder="Example: Foundation A",
+        placeholder="Enter your name",
     )
 
     if st.button(
@@ -467,16 +522,12 @@ if not st.session_state.started:
         use_container_width=True,
     ):
 
-        if not participant_code.strip():
+        player_name = name.strip()
+
+        if not player_name:
 
             st.warning(
-                "Please enter your participant code."
-            )
-
-        elif not name.strip():
-
-            st.warning(
-                "Please enter your display name."
+                "Please enter your name."
             )
 
         elif not SUPABASE_CONNECTED:
@@ -490,68 +541,20 @@ if not st.session_state.started:
 
             try:
 
-                clean_code = participant_code.strip().upper()
-                player_name = name.strip()
-                clean_group = class_group.strip()
+                # Supabase automatically assigns the student id.
+                student_id = create_student(
+                    player_name
+                )
 
-                # -----------------------------------------
-                # CREATE OR UPDATE STUDENT
-                # -----------------------------------------
-
-                student_response = (
-                    supabase
-                    .table("students")
-                    .upsert(
-                        {
-                            "participant_code": clean_code,
-                            "display_name": player_name,
-                            "class_group": (
-                                clean_group
-                                if clean_group
-                                else None
-                            ),
-                        },
-                        on_conflict="participant_code",
+                # Supabase creates the game-session row.
+                # CALSHOT keeps a hidden date/time session label too.
+                db_session_id, session_label = (
+                    create_game_session(
+                        student_id
                     )
-                    .execute()
                 )
-
-                student_id = (
-                    student_response.data[0]["id"]
-                )
-
-                # -----------------------------------------
-                # CREATE NEW GAME SESSION
-                # -----------------------------------------
-
-                session_response = (
-                    supabase
-                    .table("game_sessions")
-                    .insert(
-                        {
-                            "student_id": student_id,
-                            "total_score": 0,
-                            "questions_attempted": 0,
-                            "questions_correct": 0,
-                            "completed": False,
-                        }
-                    )
-                    .execute()
-                )
-
-                session_id = (
-                    session_response.data[0]["id"]
-                )
-
-                # -----------------------------------------
-                # START CALSHOT
-                # -----------------------------------------
 
                 reset_game()
-
-                st.session_state.participant_code = (
-                    clean_code
-                )
 
                 st.session_state.student_name = (
                     player_name
@@ -562,7 +565,11 @@ if not st.session_state.started:
                 )
 
                 st.session_state.session_id = (
-                    session_id
+                    session_label
+                )
+
+                st.session_state.db_session_id = (
+                    db_session_id
                 )
 
                 st.session_state.started = True
@@ -573,15 +580,19 @@ if not st.session_state.started:
 
                 st.rerun()
 
-            except Exception:
+            except Exception as e:
 
-                except Exception as e:
+                st.error(
+                    "CALSHOT could not start the database session."
+                )
 
-    st.error(
-        "CALSHOT could not start the database session."
-    )
+                # Keep the technical error off the public student screen.
+                # It is printed only to the Streamlit server log.
+                print(
+                    "CALSHOT Supabase start error:",
+                    repr(e),
+                )
 
-    st.code(str(e))
 
 # =========================================================
 # MAIN GAME
@@ -766,19 +777,54 @@ else:
                 st.session_state.student_name
             )
 
-            reset_game()
-
-            st.session_state.student_name = (
-                player_name
+            student_id = (
+                st.session_state.student_id
             )
 
-            st.session_state.started = True
+            try:
 
-            st.session_state.start_time = (
-                time.time()
-            )
+                db_session_id, session_label = (
+                    create_game_session(
+                        student_id
+                    )
+                )
 
-            st.rerun()
+                reset_game()
+
+                st.session_state.student_name = (
+                    player_name
+                )
+
+                st.session_state.student_id = (
+                    student_id
+                )
+
+                st.session_state.session_id = (
+                    session_label
+                )
+
+                st.session_state.db_session_id = (
+                    db_session_id
+                )
+
+                st.session_state.started = True
+
+                st.session_state.start_time = (
+                    time.time()
+                )
+
+                st.rerun()
+
+            except Exception as e:
+
+                st.error(
+                    "CALSHOT could not start a new game session."
+                )
+
+                print(
+                    "CALSHOT Supabase replay error:",
+                    repr(e),
+                )
 
         st.stop()
 
