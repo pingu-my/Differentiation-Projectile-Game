@@ -43,10 +43,7 @@ except Exception as e:
     supabase = None
     SUPABASE_CONNECTED = False
     SUPABASE_ERROR = str(e)
-if SUPABASE_CONNECTED:
-    st.success("🟢 Database connected")
-else:
-    st.error("🔴 Database connection failed")
+
 # =========================================================
 # CONSTANTS
 # =========================================================
@@ -352,6 +349,14 @@ if "started" not in st.session_state:
 
 if "student_name" not in st.session_state:
     st.session_state.student_name = ""
+if "participant_code" not in st.session_state:
+    st.session_state.participant_code = ""
+
+if "student_id" not in st.session_state:
+    st.session_state.student_id = None
+
+if "session_id" not in st.session_state:
+    st.session_state.session_id = None
 
 if "score" not in st.session_state:
     st.session_state.score = 0
@@ -438,10 +443,22 @@ if not st.session_state.started:
         "Launch your way through CALSHOT."
     )
 
+    participant_code = st.text_input(
+        "Participant code",
+        value=st.session_state.participant_code,
+        placeholder="Example: S001",
+        help="Use the participant code assigned for the study.",
+    )
+
     name = st.text_input(
-        "Student name",
+        "Display name",
         value=st.session_state.student_name,
-        placeholder="Enter your name",
+        placeholder="Enter your name or nickname",
+    )
+
+    class_group = st.text_input(
+        "Class / group (optional)",
+        placeholder="Example: Foundation A",
     )
 
     if st.button(
@@ -450,30 +467,118 @@ if not st.session_state.started:
         use_container_width=True,
     ):
 
-        if not name.strip():
+        if not participant_code.strip():
 
             st.warning(
-                "Please enter your name first."
+                "Please enter your participant code."
+            )
+
+        elif not name.strip():
+
+            st.warning(
+                "Please enter your display name."
+            )
+
+        elif not SUPABASE_CONNECTED:
+
+            st.error(
+                "The CALSHOT database is temporarily unavailable. "
+                "Please try again."
             )
 
         else:
 
-            player_name = name.strip()
+            try:
 
-            reset_game()
+                clean_code = participant_code.strip().upper()
+                player_name = name.strip()
+                clean_group = class_group.strip()
 
-            st.session_state.student_name = (
-                player_name
-            )
+                # -----------------------------------------
+                # CREATE OR UPDATE STUDENT
+                # -----------------------------------------
 
-            st.session_state.started = True
+                student_response = (
+                    supabase
+                    .table("students")
+                    .upsert(
+                        {
+                            "participant_code": clean_code,
+                            "display_name": player_name,
+                            "class_group": (
+                                clean_group
+                                if clean_group
+                                else None
+                            ),
+                        },
+                        on_conflict="participant_code",
+                    )
+                    .execute()
+                )
 
-            st.session_state.start_time = (
-                time.time()
-            )
+                student_id = (
+                    student_response.data[0]["id"]
+                )
 
-            st.rerun()
+                # -----------------------------------------
+                # CREATE NEW GAME SESSION
+                # -----------------------------------------
 
+                session_response = (
+                    supabase
+                    .table("game_sessions")
+                    .insert(
+                        {
+                            "student_id": student_id,
+                            "total_score": 0,
+                            "questions_attempted": 0,
+                            "questions_correct": 0,
+                            "completed": False,
+                        }
+                    )
+                    .execute()
+                )
+
+                session_id = (
+                    session_response.data[0]["id"]
+                )
+
+                # -----------------------------------------
+                # START CALSHOT
+                # -----------------------------------------
+
+                reset_game()
+
+                st.session_state.participant_code = (
+                    clean_code
+                )
+
+                st.session_state.student_name = (
+                    player_name
+                )
+
+                st.session_state.student_id = (
+                    student_id
+                )
+
+                st.session_state.session_id = (
+                    session_id
+                )
+
+                st.session_state.started = True
+
+                st.session_state.start_time = (
+                    time.time()
+                )
+
+                st.rerun()
+
+            except Exception:
+
+                st.error(
+                    "CALSHOT could not start the database session. "
+                    "Please try again."
+                )
 
 # =========================================================
 # MAIN GAME
