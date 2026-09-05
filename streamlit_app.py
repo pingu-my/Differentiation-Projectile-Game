@@ -495,8 +495,8 @@ def apply_gameplay_readability():
         .stApp {{
             background-image:
                 linear-gradient(
-                    rgba(255, 255, 255, 0.94),
-                    rgba(255, 255, 255, 0.97)
+                    rgba(255, 255, 255, 0.76),
+                    rgba(255, 255, 255, 0.82)
                 ),
                 url("data:image/png;base64,{encoded_background}") !important;
 
@@ -519,9 +519,9 @@ def apply_gameplay_readability():
 
         .block-container {{
             max-width: 1380px !important;
-            background: rgba(255, 255, 255, 0.95) !important;
-            backdrop-filter: blur(12px) !important;
-            -webkit-backdrop-filter: blur(12px) !important;
+            background: rgba(255, 255, 255, 0.84) !important;
+            backdrop-filter: blur(6px) !important;
+            -webkit-backdrop-filter: blur(6px) !important;
             border: 1px solid rgba(210, 224, 240, 0.95) !important;
             border-radius: 24px !important;
             box-shadow: 0 14px 42px rgba(23, 52, 95, 0.12) !important;
