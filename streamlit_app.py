@@ -28,7 +28,6 @@ st.set_page_config(
 # SUPABASE CONNECTION
 # =========================================================
 
-@st.cache_resource
 def get_supabase_client():
     return create_client(
         st.secrets["SUPABASE_URL"],
