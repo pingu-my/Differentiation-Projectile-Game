@@ -301,7 +301,7 @@ def apply_background():
                 url("data:image/png;base64,{encoded_background}");
 
             background-size: cover;
-            background-position: center 60%;
+            background-position: center 85%;
             background-repeat: no-repeat;
             background-attachment: fixed;
         }}
@@ -427,6 +427,7 @@ def render_music_player():
             MUSIC_FILE,
             format="audio/mp3",
             loop=True,
+            autoplay=True,
         )
 
 
@@ -597,25 +598,6 @@ render_music_player()
 
 
 # =========================================================
-# CALSHOT HEADER
-# =========================================================
-
-st.title(
-    "🚀 CALSHOT"
-)
-
-st.subheader(
-    "Calculus in Mind, Physics in Motion, "
-    "Excellence in Learning."
-)
-
-st.write(
-    "Master differentiation through calculus, graphs, "
-    "kinematics, computational thinking and projectile missions."
-)
-
-
-# =========================================================
 # START SCREEN
 # =========================================================
 
@@ -625,11 +607,6 @@ if not st.session_state.started:
 
     st.markdown(
         "## 🎮 Enter the Mission"
-    )
-
-    st.write(
-        "Aim. Analyse. Differentiate. "
-        "Launch your way through CALSHOT."
     )
 
     # Students only need to enter their name.
