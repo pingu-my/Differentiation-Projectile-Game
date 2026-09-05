@@ -575,10 +575,13 @@ if not st.session_state.started:
 
             except Exception:
 
-                st.error(
-                    "CALSHOT could not start the database session. "
-                    "Please try again."
-                )
+                except Exception as e:
+
+    st.error(
+        "CALSHOT could not start the database session."
+    )
+
+    st.code(str(e))
 
 # =========================================================
 # MAIN GAME
