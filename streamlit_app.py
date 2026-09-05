@@ -591,13 +591,6 @@ if "game_over" not in st.session_state:
 
 
 # =========================================================
-# TOP RIGHT MUSIC PLAYER
-# =========================================================
-
-render_music_player()
-
-
-# =========================================================
 # START SCREEN
 # =========================================================
 
@@ -696,6 +689,10 @@ if not st.session_state.started:
 # =========================================================
 
 else:
+
+    # Start the looping background music after the student
+    # has clicked Start Game.
+    render_music_player()
 
     # =====================================================
     # TIMER
