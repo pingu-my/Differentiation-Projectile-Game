@@ -43,7 +43,10 @@ except Exception as e:
     supabase = None
     SUPABASE_CONNECTED = False
     SUPABASE_ERROR = str(e)
-
+if SUPABASE_CONNECTED:
+    st.success("🟢 Database connected")
+else:
+    st.error("🔴 Database connection failed")
 # =========================================================
 # CONSTANTS
 # =========================================================
