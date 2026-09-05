@@ -38,14 +38,21 @@ def get_supabase_client():
 
 try:
     supabase = get_supabase_client()
+
+    # TEMPORARY CHECK:
+    # Confirms whether Streamlit is actually using
+    # the new Supabase secret key.
     key_value = st.secrets["SUPABASE_KEY"]
 
-if str(key_value).startswith("sb_secret_"):
-    st.success("✅ CALSHOT is using a Supabase secret key.")
-else:
-    st.error("❌ CALSHOT is NOT using a Supabase secret key.")
+    if str(key_value).startswith("sb_secret_"):
+        st.success("✅ CALSHOT is using a Supabase secret key.")
+    else:
+        st.error("❌ CALSHOT is NOT using a Supabase secret key.")
+
     supabase.table("students").select("id").limit(1).execute()
+
     SUPABASE_CONNECTED = True
+
 except Exception as e:
     supabase = None
     SUPABASE_CONNECTED = False
