@@ -119,6 +119,61 @@ def create_game_session(student_id):
 
     return response.data[0]["id"], session_label
 
+def save_question_attempt(
+    question,
+    student_answer,
+    is_correct,
+    attempt_number,
+    hints_used,
+    response_time_seconds,
+    points_earned,
+):
+    """
+    Save one CALSHOT answer attempt to Supabase.
+    """
+
+    correct_answers = question.get("answers", [])
+
+    if correct_answers:
+        correct_answer = str(correct_answers[0])
+    else:
+        correct_answer = ""
+
+    question_id = question.get(
+        "id",
+        f"Q{st.session_state.question_number}"
+    )
+
+    misconception = question.get(
+        "misconception",
+        ""
+    )
+
+    attempt_data = {
+        "session_id": st.session_state.db_session_id,
+        "student_id": st.session_state.student_id,
+        "question_number": st.session_state.question_number,
+        "question_id": str(question_id),
+        "topic": question.get("topic", ""),
+        "skill": question.get("skill", ""),
+        "difficulty": question.get("difficulty", 1),
+        "attempt_number": attempt_number,
+        "student_answer": student_answer,
+        "correct_answer": correct_answer,
+        "is_correct": is_correct,
+        "hint_used": hints_used > 0,
+        "hints_used": hints_used,
+        "misconception": misconception,
+        "response_time_seconds": response_time_seconds,
+        "points_earned": points_earned,
+    }
+
+    supabase.table(
+        "question_attempts"
+    ).insert(
+        attempt_data
+    ).execute()
+
 # =========================================================
 # CONSTANTS
 # =========================================================
@@ -1050,6 +1105,8 @@ else:
 
         else:
 
+            attempt_start_time = time.time()
+
             st.session_state.attempts += 1
 
             correct = check_answer(
@@ -1059,16 +1116,17 @@ else:
 
             skill = q["skill"]
 
+            attempt_number = (
+                st.session_state.attempts
+            )
+
+            points_earned = 0
 
             # =================================================
             # CORRECT
             # =================================================
 
             if correct:
-
-                attempt_number = (
-                    st.session_state.attempts
-                )
 
                 st.success(
                     f"✅ Correct on attempt "
@@ -1078,7 +1136,6 @@ else:
                 st.session_state.streak += 1
 
                 st.session_state.correct_answers += 1
-
 
                 attempt_penalty = (
                     attempt_number - 1
@@ -1098,8 +1155,7 @@ else:
                     q["difficulty"] - 1
                 ) * 10
 
-
-                points = max(
+                points_earned = max(
                     40,
                     100
                     + streak_bonus
@@ -1108,9 +1164,9 @@ else:
                     - hint_penalty,
                 )
 
-
-                st.session_state.score += points
-
+                st.session_state.score += (
+                    points_earned
+                )
 
                 mastery_gain = max(
                     3,
@@ -1121,7 +1177,6 @@ else:
                     - st.session_state.hint_level,
                 )
 
-
                 st.session_state.mastery[
                     skill
                 ] = min(
@@ -1131,20 +1186,17 @@ else:
                     ] + mastery_gain,
                 )
 
-
                 st.session_state.answered_current_question = (
                     True
                 )
 
-
                 st.info(
-                    f"⭐ +{points} points"
+                    f"⭐ +{points_earned} points"
                     f" | 🔥 Streak bonus: "
                     f"+{streak_bonus}"
                     f" | ⚡ Difficulty bonus: "
                     f"+{difficulty_bonus}"
                 )
-
 
             # =================================================
             # WRONG
@@ -1153,7 +1205,6 @@ else:
             else:
 
                 st.session_state.streak = 0
-
 
                 # ---------------------------------------------
                 # WRONG ATTEMPT 1 OR 2
@@ -1175,7 +1226,6 @@ else:
                         f"attempt(s) remaining."
                     )
 
-
                     st.session_state.mastery[
                         skill
                     ] = max(
@@ -1185,14 +1235,12 @@ else:
                         ] - 2,
                     )
 
-
                     if (
                         st.session_state.hint_level
                         < len(q["hints"])
                     ):
 
                         st.session_state.hint_level += 1
-
 
                 # ---------------------------------------------
                 # THIRD WRONG ATTEMPT
@@ -1204,7 +1252,6 @@ else:
                         "❌ Third attempt incorrect."
                     )
 
-
                     st.session_state.mastery[
                         skill
                     ] = max(
@@ -1214,7 +1261,6 @@ else:
                         ] - 5,
                     )
 
-
                     st.session_state.show_final_answer = (
                         True
                     )
@@ -1222,6 +1268,41 @@ else:
                     st.session_state.answered_current_question = (
                         True
                     )
+
+            # =================================================
+            # SAVE ATTEMPT TO SUPABASE
+            # =================================================
+
+            response_time_seconds = round(
+                time.time() - attempt_start_time,
+                2,
+            )
+
+            try:
+
+                save_question_attempt(
+                    question=q,
+                    student_answer=answer.strip(),
+                    is_correct=correct,
+                    attempt_number=attempt_number,
+                    hints_used=(
+                        st.session_state.hint_level
+                    ),
+                    response_time_seconds=(
+                        response_time_seconds
+                    ),
+                    points_earned=points_earned,
+                )
+
+            except Exception as e:
+
+                st.warning(
+                    "Your answer was checked, "
+                    "but CALSHOT could not save "
+                    "this attempt to the database."
+                )
+
+                st.code(str(e))
 
 
     # =====================================================
