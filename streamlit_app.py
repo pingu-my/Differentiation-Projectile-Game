@@ -495,8 +495,8 @@ def apply_gameplay_readability():
         .stApp {{
             background-image:
                 linear-gradient(
-                    rgba(255, 255, 255, 0.76),
-                    rgba(255, 255, 255, 0.82)
+                    rgba(255, 255, 255, 0.54),
+                    rgba(255, 255, 255, 0.64)
                 ),
                 url("data:image/png;base64,{encoded_background}") !important;
 
@@ -519,9 +519,9 @@ def apply_gameplay_readability():
 
         .block-container {{
             max-width: 1380px !important;
-            background: rgba(255, 255, 255, 0.84) !important;
-            backdrop-filter: blur(6px) !important;
-            -webkit-backdrop-filter: blur(6px) !important;
+            background: rgba(255, 255, 255, 0.68) !important;
+            backdrop-filter: blur(3px) !important;
+            -webkit-backdrop-filter: blur(3px) !important;
             border: 1px solid rgba(210, 224, 240, 0.95) !important;
             border-radius: 24px !important;
             box-shadow: 0 14px 42px rgba(23, 52, 95, 0.12) !important;
@@ -543,18 +543,18 @@ def apply_gameplay_readability():
         }}
 
         .block-container h2 {{
-            font-size: 2rem !important;
+            font-size: 2.1rem !important;
         }}
 
         .block-container h3 {{
-            font-size: 1.65rem !important;
+            font-size: 1.78rem !important;
             margin-top: 1.1rem !important;
         }}
 
         .block-container [data-testid="stMarkdownContainer"] p,
         .block-container [data-testid="stMarkdownContainer"] li {{
             color: #17233b !important;
-            font-size: 1.18rem !important;
+            font-size: 1.26rem !important;
             line-height: 1.7 !important;
             font-weight: 500 !important;
         }}
@@ -562,7 +562,7 @@ def apply_gameplay_readability():
         /* Question / instruction captions */
         .block-container [data-testid="stCaptionContainer"] {{
             color: #334866 !important;
-            font-size: 1.04rem !important;
+            font-size: 1.10rem !important;
             line-height: 1.55 !important;
             font-weight: 550 !important;
         }}
@@ -595,7 +595,7 @@ def apply_gameplay_readability():
         ============================================= */
 
         .block-container .katex-display {{
-            font-size: 1.35em !important;
+            font-size: 1.48em !important;
             color: #0f2745 !important;
             margin-top: 0.8rem !important;
             margin-bottom: 1rem !important;
