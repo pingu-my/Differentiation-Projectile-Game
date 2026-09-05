@@ -586,12 +586,9 @@ if not st.session_state.started:
                     "CALSHOT could not start the database session."
                 )
 
-                # Keep the technical error off the public student screen.
-                # It is printed only to the Streamlit server log.
-                print(
-                    "CALSHOT Supabase start error:",
-                    repr(e),
-                )
+                # Temporary diagnostic message.
+                # Remove this after the Supabase schema is confirmed.
+                st.code(str(e))
 
 
 # =========================================================
