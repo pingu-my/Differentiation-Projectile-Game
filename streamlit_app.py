@@ -174,6 +174,34 @@ def save_question_attempt(
         attempt_data
     ).execute()
 
+def save_mastery_record():
+    """
+    Save the student's current CALSHOT mastery profile to Supabase.
+    """
+
+    mastery = st.session_state.mastery
+
+    mastery_data = {
+        "session_id": st.session_state.db_session_id,
+        "student_id": st.session_state.student_id,
+        "differentiation": mastery["Differentiation"],
+        "gradient_interpretation": mastery["Gradient Interpretation"],
+        "stationary_points": mastery["Stationary Points"],
+        "projectile_physics": mastery["Projectile Physics"],
+        "computational_thinking": mastery["Computational Thinking"],
+    }
+
+    response = (
+        supabase
+        .table("mastery_records")
+        .insert(mastery_data)
+        .execute()
+    )
+
+    if not response.data:
+        raise RuntimeError("Mastery record was not created.")
+
+
 # =========================================================
 # CONSTANTS
 # =========================================================
@@ -1429,6 +1457,19 @@ else:
             st.session_state.question_number
             >= TOTAL_QUESTIONS
         ):
+
+            try:
+
+                save_mastery_record()
+
+            except Exception as e:
+
+                st.warning(
+                    "CALSHOT completed the mission, "
+                    "but could not save the final mastery record."
+                )
+
+                st.code(str(e))
 
             st.session_state.game_over = True
 
